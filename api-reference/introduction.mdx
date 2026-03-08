@@ -1,33 +1,44 @@
 ---
 title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+description: 'Access Audimee voice models and perform AI voice conversions'
 ---
 
-<Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
-</Note>
+## Overview
 
-## Welcome
+The Audimee API lets you list available AI voice models and submit audio files for voice conversion. Conversions run asynchronously — you create a conversion job, then poll for its status until it's done.
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+## Base URL
 
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+```
+https://audimee.com/api/v1
+```
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+All endpoints require a bearer token in the `Authorization` header:
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
+```
+Authorization: Bearer {token}
+```
+
+## Quick example
+
+```bash
+# 1. Pick a voice model
+curl https://audimee.com/api/v1/voice-models \
+  -H "Authorization: Bearer {token}"
+
+# 2. Start a conversion
+curl -X POST https://audimee.com/api/v1/conversions \
+  -H "Authorization: Bearer {token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "voiceModelId": "101",
+    "inputFileUrl": "https://example.com/audio/my-recording.wav",
+    "conversionStrength": 0.7
+  }'
+
+# 3. Poll until done
+curl https://audimee.com/api/v1/conversions/{id} \
+  -H "Authorization: Bearer {token}"
 ```

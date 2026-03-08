@@ -1,16 +1,13 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
+    "title": "Audimee API",
+    "description": "The Audimee API allows you to access voice models and perform AI voice conversions.",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://audimee.com/api/v1"
     }
   ],
   "security": [
@@ -19,198 +16,275 @@
     }
   ],
   "paths": {
-    "/plants": {
+    "/voice-models": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "The maximum number of results to return",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
+        "summary": "List voice models",
+        "description": "Returns a list of all available voice models that can be used for conversions.",
+        "operationId": "listVoiceModels",
+        "tags": ["Voice Models"],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "A list of voice models",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Plant"
+                    "$ref": "#/components/schemas/VoiceModel"
                   }
-                }
+                },
+                "example": [
+                  {
+                    "id": "101",
+                    "name": "Mark",
+                    "description": "Meet Mark, the AI singer whose electrifying voice effortlessly navigates the realms of Pop and EDM, captivating audiences with a unique blend of airy vocals that soar across a wide range.",
+                    "previewUrl": "https://public-assets.audimeestorage.com/artistPreviews%2Fmark-preview.mp3",
+                    "gender": "Male",
+                    "genres": ["Pop", "Dance", "Airy"],
+                    "pitchLow": "C3",
+                    "pitchHigh": "C5"
+                  },
+                  {
+                    "id": "104",
+                    "name": "Blake",
+                    "description": "Blake is a force to be reckoned with, wielding a raspy voice that paints his music with raw emotion and untamed energy.",
+                    "previewUrl": "https://public-assets.audimeestorage.com/artistPreviews%2Fblake-preview.mp3",
+                    "gender": "Male",
+                    "genres": ["Rock", "Gritty", "Belting"],
+                    "pitchLow": "F#3",
+                    "pitchHigh": "G#4"
+                  }
+                ]
               }
             }
           },
-          "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "plant response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Plant"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "401": {
+            "description": "Unauthorized — missing or invalid bearer token"
           }
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
+    "/conversions": {
       "post": {
-        "description": "Information about a new plant added to the store",
+        "summary": "Create a conversion",
+        "description": "Creates a new voice conversion using a specified voice model and audio file URL.",
+        "operationId": "createConversion",
+        "tags": ["Conversions"],
         "requestBody": {
-          "description": "Plant added to the store",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/CreateConversionRequest"
+              },
+              "example": {
+                "voiceModelId": "101",
+                "inputFileUrl": "https://example.com/audio/my-recording.wav",
+                "conversionStrength": 0.7,
+                "pitchShift": 3
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Conversion created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateConversionResponse"
+                },
+                "example": {
+                  "id": "457d147e-e0c4-4b92-a731-92bbc8b7ab22"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid bearer token"
+          }
+        }
+      }
+    },
+    "/conversions/{id}": {
+      "get": {
+        "summary": "Get a conversion",
+        "description": "Retrieves the status and details of a specific conversion by its ID.",
+        "operationId": "getConversion",
+        "tags": ["Conversions"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the conversion",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversion details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversion"
+                },
+                "example": {
+                  "id": "457d147e-e0c4-4b92-a731-92bbc8b7ab22",
+                  "createdAt": "2024-09-06T08:09:36.000Z",
+                  "voiceModelId": "101",
+                  "percentageDone": 100,
+                  "confirmedDone": true,
+                  "failed": false,
+                  "outputFilePlayUrl": "https://sounds.audimeestorage.com/output.wav",
+                  "outputFileDownloadUrl": "https://sounds.audimeestorage.com/output.wav?download=1"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized — missing or invalid bearer token"
+          },
+          "404": {
+            "description": "Conversion not found"
           }
         }
       }
     }
   },
   "components": {
-    "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
-          },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
-          }
-        }
-      },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
-          },
-          {
-            "required": [
-              "id"
-            ],
-            "type": "object",
-            "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
-              }
-            }
-          }
-        ]
-      },
-      "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer"
+      }
+    },
+    "schemas": {
+      "VoiceModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the voice model"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the voice model"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of the voice and its characteristics"
+          },
+          "previewUrl": {
+            "type": "string",
+            "description": "URL to a preview audio of this voice"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["Male", "Female"],
+            "description": "Gender of the voice"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of genres this voice is suitable for"
+          },
+          "pitchLow": {
+            "type": "string",
+            "description": "The low end of the pitch sweetspot for this voice"
+          },
+          "pitchHigh": {
+            "type": "string",
+            "description": "The high end of the pitch sweetspot for this voice"
+          }
+        }
+      },
+      "CreateConversionRequest": {
+        "type": "object",
+        "required": ["voiceModelId", "inputFileUrl"],
+        "properties": {
+          "voiceModelId": {
+            "type": "string",
+            "description": "The ID of the voice model to use for the conversion"
+          },
+          "inputFileUrl": {
+            "type": "string",
+            "description": "A publicly accessible URL to the audio file to be converted"
+          },
+          "conversionStrength": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Strength of the voice conversion effect (0.0 to 1.0)"
+          },
+          "pitchShift": {
+            "type": "integer",
+            "minimum": -24,
+            "maximum": 24,
+            "description": "Pitch shift applied during the conversion (-24 to 24 semitones, whole numbers only)"
+          },
+          "sampleRateHz": {
+            "type": "integer",
+            "enum": [44100, 48000],
+            "description": "Sample rate for the output audio file"
+          }
+        }
+      },
+      "CreateConversionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the created conversion"
+          }
+        }
+      },
+      "Conversion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the conversion"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the conversion was created"
+          },
+          "voiceModelId": {
+            "type": "string",
+            "description": "ID of the voice model used for this conversion"
+          },
+          "percentageDone": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Percentage of the conversion process completed (0-100)"
+          },
+          "confirmedDone": {
+            "type": "boolean",
+            "description": "Whether the conversion process is complete"
+          },
+          "failed": {
+            "type": "boolean",
+            "description": "Whether the conversion failed"
+          },
+          "outputFilePlayUrl": {
+            "type": "string",
+            "description": "URL to play the converted audio file"
+          },
+          "outputFileDownloadUrl": {
+            "type": "string",
+            "description": "URL to download the converted audio file"
+          }
+        }
       }
     }
   }
