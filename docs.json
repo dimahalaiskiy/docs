@@ -11,7 +11,7 @@
   "openapi": "api-reference/openapi.json",
   "api": {
     "playground": {
-      "mode": "hide"
+      "display": "none"
     }
   },
   "navigation": {
